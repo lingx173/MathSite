@@ -22,6 +22,8 @@ function freshUIStates(count: number): QuestionUIState[] {
     isCorrect: null,
     showSolution: false,
     showHint: false,
+    derivedHint: null,
+    hintLoading: false,
   }));
 }
 

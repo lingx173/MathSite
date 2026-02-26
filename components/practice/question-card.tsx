@@ -7,12 +7,14 @@ import {
   Lightbulb,
   Eye,
   Send,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { Question, QuestionUIState } from "@/lib/practice-types";
+import { isCorrect as checkAnswer } from "@/lib/answer";
 
 interface QuestionCardProps {
   question: Question;
@@ -61,14 +63,65 @@ export function QuestionCard({
   state,
   onStateChange,
 }: QuestionCardProps) {
-  const { userAnswer, isCorrect, showHint, showSolution } = state;
+  const {
+    userAnswer,
+    isCorrect,
+    showHint,
+    showSolution,
+    derivedHint,
+    hintLoading,
+  } = state;
 
   const handleCheck = useCallback(() => {
-    const normalise = (s: string) =>
-      s.trim().toLowerCase().replace(/\s+/g, "");
-    const correct = normalise(userAnswer) === normalise(question.answer);
+    const correct = checkAnswer(
+      userAnswer,
+      question.answer,
+      question.answerFormat
+    );
     onStateChange({ isCorrect: correct });
-  }, [userAnswer, question.answer, onStateChange]);
+  }, [userAnswer, question.answer, question.answerFormat, onStateChange]);
+
+  const handleHintClick = useCallback(() => {
+    if (question.hint) {
+      onStateChange({ showHint: !showHint });
+      return;
+    }
+    if (derivedHint !== undefined && derivedHint !== null) {
+      onStateChange({ showHint: !showHint });
+      return;
+    }
+    if (hintLoading) return;
+    onStateChange({ showHint: true, hintLoading: true });
+    fetch("/api/hint", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: question.prompt,
+        questionId: question.qid,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : { hint: "No hint available." }))
+      .then((data: { hint?: string }) => {
+        onStateChange({
+          derivedHint: data.hint ?? "No hint available.",
+          hintLoading: false,
+        });
+      })
+      .catch(() => {
+        onStateChange({
+          derivedHint: "Could not load hint. Try again.",
+          hintLoading: false,
+        });
+      });
+  }, [
+    question.hint,
+    question.prompt,
+    question.qid,
+    showHint,
+    derivedHint,
+    hintLoading,
+    onStateChange,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -91,8 +144,8 @@ export function QuestionCard({
       : "hover:shadow-md";
 
   return (
-    <Card className={`transition-all rounded-xl ${borderClass}`}>
-      <CardContent className="flex flex-col gap-4 pt-2">
+    <Card className={`transition-all rounded-xl overflow-hidden ${borderClass}`}>
+      <CardContent className="flex flex-col gap-4 pt-2 min-w-0">
         {/* Header row */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge
@@ -123,7 +176,7 @@ export function QuestionCard({
 
         {/* Answer input + check */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Input
               placeholder="Your answer..."
               value={userAnswer}
@@ -131,7 +184,7 @@ export function QuestionCard({
                 onStateChange({ userAnswer: e.target.value, isCorrect: null })
               }
               onKeyDown={handleKeyDown}
-              className={`pr-10 font-mono ${
+              className={`pr-10 font-mono min-h-[44px] touch-manipulation ${
                 isCorrect === true
                   ? "border-success focus-visible:ring-success/30"
                   : isCorrect === false
@@ -151,7 +204,8 @@ export function QuestionCard({
             size="sm"
             onClick={handleCheck}
             disabled={!userAnswer.trim()}
-            className="gap-1.5 shrink-0"
+            className="gap-1.5 shrink-0 min-h-[44px] sm:min-h-0 touch-manipulation"
+            aria-label="Check answer"
           >
             <Send className="size-3.5" />
             Check
@@ -177,36 +231,48 @@ export function QuestionCard({
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons — min touch target for mobile */}
         <div className="flex flex-wrap gap-2">
-          {question.hint && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onStateChange({ showHint: !showHint })}
-              className="gap-1.5 text-xs"
-            >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleHintClick}
+            disabled={hintLoading}
+            className="gap-1.5 text-xs min-h-[44px] sm:min-h-0 touch-manipulation"
+            aria-label={showHint ? "Hide hint" : "Show hint"}
+          >
+            {hintLoading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
               <Lightbulb className="size-3.5" />
-              {showHint ? "Hide Hint" : "Hint"}
-            </Button>
-          )}
+            )}
+            {hintLoading ? "Loading…" : showHint ? "Hide Hint" : "Hint"}
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onStateChange({ showSolution: !showSolution })}
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-xs min-h-[44px] sm:min-h-0 touch-manipulation"
+            aria-label={showSolution ? "Hide solution" : "Show solution"}
           >
             <Eye className="size-3.5" />
             {showSolution ? "Hide Solution" : "Show Solution"}
           </Button>
         </div>
 
-        {/* Hint */}
-        {showHint && question.hint && (
+        {/* Hint — from question or from /api/hint */}
+        {showHint && (
           <div className="rounded-xl border border-chart-3/20 bg-chart-3/5 px-4 py-3">
             <p className="text-sm text-foreground">
               <span className="font-semibold text-chart-3">Hint: </span>
-              {question.hint}
+              {hintLoading && derivedHint == null ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Loading…
+                </span>
+              ) : (
+                question.hint ?? derivedHint ?? "No hint available."
+              )}
             </p>
           </div>
         )}

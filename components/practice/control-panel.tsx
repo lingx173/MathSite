@@ -263,7 +263,9 @@ export function ControlPanel({
         size="lg"
         onClick={onGenerate}
         disabled={loading}
-        className="w-full gap-2"
+        className="w-full gap-2 min-h-[48px] touch-manipulation"
+        aria-busy={loading}
+        aria-label={loading ? "Generating questions" : "Generate 10 questions"}
       >
         {loading ? (
           <>

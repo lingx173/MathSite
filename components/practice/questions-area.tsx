@@ -81,11 +81,11 @@ export function QuestionsArea({
 }: QuestionsAreaProps) {
   if (loading) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 min-w-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="h-6 w-40 animate-pulse rounded bg-muted" />
         </div>
-        {Array.from({ length: 4 }).map((_, i) => (
+        {Array.from({ length: 10 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
       </div>
@@ -109,7 +109,7 @@ export function QuestionsArea({
     practiceSet.meta.mode === "rag" ? "Real Past Problems" : "AI-Generated";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 min-w-0">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold text-foreground">
           {modeLabel} Set

@@ -129,4 +129,8 @@ export interface QuestionUIState {
   isCorrect: boolean | null;
   showSolution: boolean;
   showHint: boolean;
+  /** Hint text from /api/hint when question has no built-in hint */
+  derivedHint?: string | null;
+  /** True while fetching hint from /api/hint */
+  hintLoading?: boolean;
 }
