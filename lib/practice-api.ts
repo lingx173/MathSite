@@ -38,7 +38,7 @@ function buildApiPayload(
     subtopic: subtopic || undefined,
     mode: MODE_TO_API[mode],
     difficulty,
-    count: 10,
+    count: 5,
     includeSolutions: true,
   };
 }

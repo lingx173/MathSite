@@ -265,7 +265,7 @@ export function ControlPanel({
         disabled={loading}
         className="w-full gap-2 min-h-[48px] touch-manipulation"
         aria-busy={loading}
-        aria-label={loading ? "Generating questions" : "Generate 10 questions"}
+        aria-label={loading ? "Generating questions" : "Generate 5 questions"}
       >
         {loading ? (
           <>
@@ -275,7 +275,7 @@ export function ControlPanel({
         ) : (
           <>
             <Zap className="size-4" />
-            Generate 10 Questions
+            Generate 5 Questions
           </>
         )}
       </Button>

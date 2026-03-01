@@ -42,7 +42,7 @@ function EmptyState() {
       </h3>
       <p className="max-w-sm text-sm text-muted-foreground leading-relaxed text-pretty">
         Select a topic, choose your mode and difficulty, then hit{" "}
-        <span className="font-medium text-primary">Generate 10 Questions</span>{" "}
+        <span className="font-medium text-primary">Generate 5 Questions</span>{" "}
         to start your training session.
       </p>
     </div>
@@ -85,7 +85,7 @@ export function QuestionsArea({
         <div className="flex items-center gap-2 mb-2">
           <div className="h-6 w-40 animate-pulse rounded bg-muted" />
         </div>
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
       </div>
