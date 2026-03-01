@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
     return errorResponse(400, message);
   }
 
-  const webhookUrl = process.env.N8N_PRACTICE_WEBHOOK_URL;
+  const webhookUrl =
+    process.env.N8N_PRACTICE_WEBHOOK_URL ||
+    process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
   if (!webhookUrl || typeof webhookUrl !== "string" || webhookUrl.trim() === "") {
     return errorResponse(503, "Webhook is not configured");
   }

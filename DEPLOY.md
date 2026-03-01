@@ -45,11 +45,13 @@ git push -u origin main
 4. **Set environment variable (required for practice generation)**  
    Before or after the first deploy, add the n8n webhook URL so “Generate 10 Questions” works:
    - In the Vercel project, go to **Settings** → **Environment Variables**.
-   - Add:
-     - **Name:** `N8N_PRACTICE_WEBHOOK_URL`
+   - Add **one** of:
+     - **Name:** `N8N_PRACTICE_WEBHOOK_URL` (server-only, recommended), or  
+     - **Name:** `NEXT_PUBLIC_N8N_WEBHOOK_URL` (same pattern as the Debate site)
      - **Value:** `https://ling-xue-uga.app.n8n.cloud/webhook-test/math-practice`
-   - Apply to **Production** (and **Preview** if you want it in preview deployments).
-   - Save. Redeploy the project (Deployments → … on latest → Redeploy) so the new variable is used.
+   - Apply to **Production** (and **Preview** if you want). Save, then **Redeploy** so the variable is used.
+
+   **Local development:** Copy `.env.example` to `.env.local` and set the same URL so “Generate 10 Questions” works locally.
 
 5. **Deploy**  
    Click **Deploy**. Vercel will build and deploy. When it’s done, you’ll get a URL like `mathsite-xxx.vercel.app`. You can add a custom domain later in **Settings → Domains**.
