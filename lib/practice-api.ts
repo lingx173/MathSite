@@ -74,7 +74,53 @@ export async function generateSet(
     throw new Error(message);
   }
 
-  const data = (await res.json()) as {
+  const data = (await res.json()) as unknown;
+
+  // n8n workflow shape: { topic, mode, problems: [{ id, question, answer, explanation }] }
+  if (
+    data &&
+    typeof data === "object" &&
+    "problems" in data &&
+    Array.isArray((data as { problems: unknown }).problems)
+  ) {
+    const n8n = data as {
+      topic?: string;
+      mode?: string;
+      problems: Array<{
+        id?: number;
+        question: string;
+        answer: string;
+        explanation?: string;
+      }>;
+    };
+    const topicStr = n8n.topic ?? "Mixed";
+    const modeStr = n8n.mode ?? "simulated";
+    const frontendMode: Mode =
+      modeStr === "real" ? "rag" : modeStr === "mock" ? "simulated" : "simulated";
+
+    const questions: Question[] = (n8n.problems ?? []).map((p, i) => ({
+      qid: `q-${p.id ?? i + 1}`,
+      prompt: p.question ?? "",
+      answer: String(p.answer ?? ""),
+      solution: p.explanation ?? "",
+      hint: undefined,
+      difficulty: Math.min(10, Math.max(1, i + 1)),
+      topic: topicStr,
+    }));
+
+    return {
+      meta: {
+        domain: "mathcounts",
+        topic: topicStr,
+        mode: frontendMode,
+        generatedAt: new Date().toISOString(),
+      },
+      questions,
+    };
+  }
+
+  // Standard shape: { meta, questions }
+  const standard = data as {
     meta: { domain: string; topic: string; subtopic?: string; mode: string; generatedAt: string };
     questions: Array<{
       qid: string;
@@ -89,27 +135,28 @@ export async function generateSet(
     }>;
   };
 
-  const questions: Question[] = data.questions.map((q) => ({
-    qid: q.qid,
-    prompt: q.prompt,
-    answer: q.answer,
+  const questions: Question[] = (standard.questions ?? []).map((q) => ({
+    qid: q.qid ?? `q-${Date.now()}`,
+    prompt: q.prompt ?? "",
+    answer: q.answer ?? "",
     answerFormat: q.answerFormat,
-    solution: q.solution,
+    solution: q.solution ?? "",
     hint: q.hint,
-    difficulty: q.difficulty,
+    difficulty: q.difficulty ?? 5,
     topic: q.topic,
     source: q.source,
   }));
 
-  const frontendMode: Mode = data.meta.mode === "real" ? "rag" : "simulated";
+  const frontendMode: Mode =
+    standard.meta?.mode === "real" ? "rag" : "simulated";
 
   return {
     meta: {
-      domain: data.meta.domain,
-      topic: data.meta.topic,
-      subtopic: data.meta.subtopic,
+      domain: standard.meta?.domain ?? "mathcounts",
+      topic: standard.meta?.topic ?? "Mixed",
+      subtopic: standard.meta?.subtopic,
       mode: frontendMode,
-      generatedAt: data.meta.generatedAt,
+      generatedAt: standard.meta?.generatedAt ?? new Date().toISOString(),
     },
     questions,
   };
